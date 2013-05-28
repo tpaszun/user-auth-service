@@ -1,0 +1,19 @@
+{
+  "name": "user-auth-service",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "*",
+    "connect-redis": "*",
+    "redis": "*",
+    "passport": "*",
+    "passport-local": "*",
+    "passport-remember-me": "*",
+    "underscore": "*",
+    "mocha": "*",
+    "chai": "*"
+  }
+}
