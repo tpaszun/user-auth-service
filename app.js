@@ -5,7 +5,8 @@ var express = require('express')
   , LocalStrategy = require('passport-local').Strategy
   , RememberMeStrategy = require('passport-remember-me').Strategy
   , TokenStore = require('./tokens').TokenStore
-  , users = require('./users')
+  , UsersStore = require('./users').UsersStore
+  , users = new UsersStore()
   , rememberMe = new TokenStore()
   , activation = new TokenStore()
   , passReset = new TokenStore();
@@ -28,7 +29,7 @@ passport.use(new LocalStrategy(
       
       users.findByEmail(email, function(err, user) {
         if (err) { return done(err); }
-        if (!user) { return done(null, false, { message: 'Unknown user ' + username }); }
+        if (!user) { return done(null, false, { message: 'Unknown user ' + email }); }
         if (user.password != password) { return done(null, false, { message: 'Invalid password' }); }
         return done(null, user);
       })
@@ -58,6 +59,7 @@ passport.use(new RememberMeStrategy(
 // all environments
 app.set('port', process.env.PORT || 3000);
 app.use(express.logger('dev'));
+app.use(express.cookieParser());
 app.use(express.bodyParser());
 app.use(express.methodOverride());
 app.use(express.session({ 
@@ -74,7 +76,55 @@ if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
+function auth(req, res, next) {
+  if (req.isAuthenticated()) return next();
 
+  return res.send(401);
+}
+
+app.get('/check', auth, function(req, res) {
+  return res.json({
+    uid: req.user.id
+  });
+});
+
+app.get('/user', auth, function(req, res) {
+  return res.json(req.user);
+});
+
+app.post('/login', passport.authenticate('local'), function(req, res, next) {
+  // Issue a remember me cookie if the option was checked
+  if (!req.body.remember_me) return next();
+  
+  rememberMe.issue(req.user.id, function(err, token) {
+    if (err) return req.send(500);
+
+    res.cookie('remember_me', token, { path: '/', httpOnly: true, maxAge: 604800000 });
+    return next();
+  });  
+}, function(req, res) {
+  return req.send(200);
+});
+
+app.post('/logout', function(req, res) {
+
+});
+
+app.post('/register', function(req, res) {
+  users.add(req.body.email, req.body.fullname, req.body.pass, function(err, user) {
+    if (err) return req.send(500);
+
+    return req.json(user);
+  })
+});
+
+app.get('/activate/:id', function(req, res) {
+
+});
+
+app.post('/resetpass/:id', function(req, res) {
+
+});
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));

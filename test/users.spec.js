@@ -1,11 +1,12 @@
 var user = require('../users')
+  , utils = require('../utils')
   , expect = require('chai').expect
   , crypto = require('crypto');
 
 describe('UsersStore', function() {
   var users = new user.UsersStore()
     , newUser = {
-      email: 'test@examplce.com',
+      email: 'test@example.com',
       fullname: 'Test Example',
       pass: 'test'
     }
@@ -17,14 +18,17 @@ describe('UsersStore', function() {
       expect(user).to.exist;
 
       expect(user.id).to.exist;
+      expect(user.salt).to.exist;
       expect(user.active).to.be.false;
       expect(user.email).to.be.equal(newUser.email);
       expect(user.fullname).to.be.equal(newUser.fullname);
 
-      expect(user.pass).to.be.equal(crypto.createHash('sha256').update(newUser.pass).digest('hex'));
+      utils.hash(newUser.pass, user.salt, function(err, hash) {
+        expect(user.pass).to.be.equal(hash);
 
-      createdUser = user;
-      return done();
+        createdUser = user;
+        return done();
+      });
     });
   });
 
@@ -34,12 +38,16 @@ describe('UsersStore', function() {
       expect(user).to.exist;
 
       expect(user.id).to.exist;
+      expect(user.salt).to.exist;
       expect(user.active).to.be.false;
       expect(user.email).to.be.equal(createdUser.email);
       expect(user.fullname).to.be.equal(createdUser.fullname);
 
-      expect(user.pass).to.be.equal(crypto.createHash('sha256').update(newUser.pass).digest('hex'));
-      return done();
+      utils.hash(newUser.pass, user.salt, function(err, hash) {
+        expect(user.pass).to.be.equal(hash);
+
+        return done();
+      });
     });
   });
 
@@ -49,12 +57,16 @@ describe('UsersStore', function() {
       expect(user).to.exist;
 
       expect(user.id).to.exist;
+      expect(user.salt).to.exist;
       expect(user.active).to.be.false;
       expect(user.email).to.be.equal(createdUser.email);
       expect(user.fullname).to.be.equal(createdUser.fullname);
 
-      expect(user.pass).to.be.equal(crypto.createHash('sha256').update(newUser.pass).digest('hex'));
-      return done();  		
+      utils.hash(newUser.pass, user.salt, function(err, hash) {
+        expect(user.pass).to.be.equal(hash);
+
+        return done();
+      });
   	})
   });
 

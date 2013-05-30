@@ -3,7 +3,8 @@ Authentication service
 
 Functions:
 
-  - check if user is logged in and return logged user
+  - check if user is logged in and return logged user id
+  - get user data
   - log in
   - log out
   - register account
@@ -13,11 +14,11 @@ Functions:
 
 Redis:
 
-  - Sessions (SHA25 hash)
+  - Sessions
   - Users
-  - RememberMe tokens (SHA256 hash)
-  - Activation tokens (SHA256 hash)
-  - PassReset tokens (SHA256 hash)
+  - RememberMe tokens
+  - Activation tokens
+  - PassReset tokens
 
 
 ### `GET /check`

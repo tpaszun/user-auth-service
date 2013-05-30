@@ -1,6 +1,7 @@
 var redis = require('redis')
   , crypto = require('crypto')
-  , _ = require('underscore');
+  , _ = require('underscore')
+  , utils = require('./utils');
 
 /**
  * Initialize UsersStore with given `options`.
@@ -45,13 +46,14 @@ UsersStore.prototype.findById = function(uid, fn) {
  * Find user by email address.
  *
  * @param {String} email
+ * @param {Function} fn
  * @api public
  */
 
 UsersStore.prototype.findByEmail = function(email, fn) {
   var self = this;
 
-  email = self.prefix + email;
+  email = self.prefix + 'email:' + email;
 
   self.client.get(email, function(err, uid) {
     if (err) return fn(err);
@@ -67,32 +69,60 @@ UsersStore.prototype.findByEmail = function(email, fn) {
  * @param {String} email
  * @param {String} fullname
  * @param {String} pass
+ * @param {Function} fn
  * @api public
  */
 
 UsersStore.prototype.add = function(email, fullname, pass, fn) {
   var uid
     , user = {
-      id: crypto.randomBytes(8).toString('hex'),
+      id: null,
       email: email,
       fullname: fullname,
-      pass: crypto.createHash('sha256').update(pass).digest('hex'),
+      pass: null,
+      salt: crypto.randomBytes(16).toString('hex'),
       active: false
     }
-    , self = this;
+    , self = this
+    , emailKey;
 
-  uid = self.prefix + user.id;
+  emailKey = self.prefix + 'email:' + email;
 
-  self.client.hmset(uid, user, function(err) {
+  self.client.set(emailKey, 1, 'EX', 1, 'NX', function(err, result) {
     if (err) return fn(err);
 
-    email = self.prefix + email;
+    if (!result) return fn('Email already registered'); // email address already registered
 
-    self.client.set(email, user.id, function(err) {
-      if (err) return fn(err);
+    function saveUser() {
+      var userIdKey;
 
-      return fn(null, user);
-    });
+      user.id = crypto.randomBytes(8).toString('hex');
+      userIdKey = self.prefix + user.id;
+
+      self.client.hsetnx(userIdKey, 'id', user.id, function(err, result) {
+        if (err) return fn(err);
+
+        if (!result) return saveUser(); // if there is already a user with provided user.id generate a new id and save
+
+        utils.hash(pass, user.salt, function(err, derivedKey) {
+          if (err) return fn(err);
+
+          user.pass = derivedKey.toString('hex');
+
+          self.client.hmset(userIdKey, user, function(err) {
+            if (err) return fn(err);
+
+            self.client.set(emailKey, user.id, function(err) {
+              if (err) return fn(err);
+
+              return fn(null, user);
+            });
+          });
+        });
+      });
+    }
+
+    saveUser();
   });
 };
 
@@ -100,6 +130,7 @@ UsersStore.prototype.add = function(email, fullname, pass, fn) {
  * Activate user with given id.
  *
  * @param {String} uid
+ * @param {Function} fn
  * @api public
  */
 
@@ -117,6 +148,7 @@ UsersStore.prototype.activate = function(uid, fn) {
  * Delete user with given id.
  *
  * @param {String} uid
+ * @param {Function} fn
  * @api public
  */
 
@@ -147,6 +179,7 @@ UsersStore.prototype.del = function(uid, fn) {
  *
  * @param {String} uid
  * @param {Object} user
+ * @param {Function} fn
  * @api public
  */
 
