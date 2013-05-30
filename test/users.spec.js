@@ -1,7 +1,9 @@
 var user = require('../users')
   , utils = require('../utils')
   , expect = require('chai').expect
-  , crypto = require('crypto');
+  , crypto = require('crypto')
+  , testUtils = require('./testUtils');
+
 
 describe('UsersStore', function() {
   var users = new user.UsersStore()
@@ -11,6 +13,10 @@ describe('UsersStore', function() {
       pass: 'test'
     }
     , createdUser;
+
+  before(function(done) {
+    testUtils.flushDb(done);
+  });
 
   it('should add a new user', function(done) {
     users.add(newUser.email, newUser.fullname, newUser.pass, function(err, user) {
@@ -52,7 +58,7 @@ describe('UsersStore', function() {
   });
 
   it('should find a user by email', function(done) {
-  	users.findByEmail(createdUser.email, function(err, user) {
+    users.findByEmail(createdUser.email, function(err, user) {
       expect(err).to.not.exist;
       expect(user).to.exist;
 
@@ -67,7 +73,7 @@ describe('UsersStore', function() {
 
         return done();
       });
-  	})
+    })
   });
 
   it('should not find a non-existing user', function(done) {
@@ -87,17 +93,17 @@ describe('UsersStore', function() {
         expect(err).to.not.exist;
         expect(user).to.exist;
         expect(user.active).to.be.true;
-      	return done();
+        return done();
       });
     });
   });
 
   it('should delete an user', function(done) {
-  	users.del(createdUser.id, function(err) {
+    users.del(createdUser.id, function(err) {
       expect(err).to.not.exist;
 
       return done();
-  	});
+    });
   });
 
   it('should not find deleted user by id', function(done) {

@@ -1,5 +1,6 @@
 var redis = require('redis')
-  , crypto = require('crypto');
+  , crypto = require('crypto')
+  , utils = require('./utils');
 
 /**
  * Initialize TokenStore with given `options`.
@@ -15,7 +16,7 @@ function TokenStore(options) {
     ? 'rmmbr:'
     : options.prefix;
 
-  this.client = options.client || redis.createClient();
+  this.client = options.client || utils.redisClient();
 
   this.ttl = options.ttl;
 }

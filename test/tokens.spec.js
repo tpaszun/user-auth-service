@@ -1,10 +1,15 @@
 var tokens = require('../tokens')
-  , expect = require('chai').expect;
+  , expect = require('chai').expect
+  , testUtils = require('./testUtils');
 
 describe('TokenStore', function() {
   var tokenStore = new tokens.TokenStore()
     , token
     , userId = 'test123asdqwerty';
+
+  before(function(done) {
+    testUtils.flushDb(done);
+  });
 
   it('should issue a token', function(done) {
     tokenStore.issue(userId, function(err, tok) {

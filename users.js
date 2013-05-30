@@ -17,7 +17,7 @@ function UsersStore(options) {
     ? 'user:'
     : options.prefix;
 
-  this.client = options.client || redis.createClient();
+  this.client = options.client || utils.redisClient();
 }
 
 /**

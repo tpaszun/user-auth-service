@@ -1,4 +1,6 @@
-var crypto = require('crypto');
+var crypto = require('crypto')
+  , redis = require('redis')
+  , config = require('./config');
 
 exports = module.exports;
 
@@ -16,4 +18,15 @@ exports.hash = function(pass, salt, fn) {
     if (err) return fn(err);
     return fn(null, derivedKey.toString('hex'));
   });
+};
+
+/**
+ * Create configured redis client
+ *
+ * @param options
+ * @returns {RedisClient}
+ */
+
+exports.redisClient = function(options) {
+  return redis.createClient(config.redis.port, config.redis.host, options);
 };

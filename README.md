@@ -30,9 +30,9 @@ response: `uid`
 response: User object json
 
     {
-	    id: '12836127',
-	    email: 'test@example.com',
-	    fullname: 'Test Example'
+        id: '12836127',
+        email: 'test@example.com',
+        fullname: 'Test Example'
     }
 
 ### `POST /login`
