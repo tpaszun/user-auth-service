@@ -38,6 +38,17 @@ describe('UsersStore', function() {
     });
   });
 
+  it('should not add user with email already existing in db', function(done) {
+    users.add(newUser.email, newUser.fullname, newUser.pass, function(err, user) {
+      expect(err).to.exist;
+      expect(err).to.be.equal('Email already registered');
+
+      expect(user).to.not.exist;
+
+      return done();
+    });
+  });
+
   it('should find a user by id', function(done) {
     users.findById(createdUser.id, function(err, user) {
       expect(err).to.not.exist;
