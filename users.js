@@ -161,7 +161,7 @@ UsersStore.prototype.del = function(uid, fn) {
     uid = self.prefix + uid;
 
     self.client.del(uid, function(err) {
-      var email = self.prefix + user.email;
+      var email = self.prefix + 'email:' + user.email;
 
       if (err) return fn(err);
 

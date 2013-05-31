@@ -5,6 +5,7 @@ var express = require('express')
   , LocalStrategy = require('passport-local').Strategy
   , RememberMeStrategy = require('passport-remember-me').Strategy
   , config = require('./config')
+  , utils = require('./utils')
   , TokenStore = require('./tokens').TokenStore
   , UsersStore = require('./users').UsersStore
   , users = new UsersStore()
@@ -29,15 +30,16 @@ passport.use(new LocalStrategy(
     usernameField: 'email',
     passwordField: 'pass'
   },
-  function(email, password, done) {
-    process.nextTick(function () {
-      
-      users.findByEmail(email, function(err, user) {
-        if (err) { return done(err); }
-        if (!user) { return done(null, false, { message: 'Unknown user ' + email }); }
-        if (user.password != password) { return done(null, false, { message: 'Invalid password' }); }
+  function(email, pass, done) {
+    users.findByEmail(email, function(err, user) {
+      if (err) return done(err);
+      if (!user) return done(null, false);
+
+      utils.hash(pass, user.salt, function(err, hash) {
+        if (err) return done(err);
+        if (user.pass != hash) return done(null, false);
         return done(null, user);
-      })
+      });
     });
   }
 ));
@@ -108,7 +110,7 @@ app.post('/login', passport.authenticate('local'), function(req, res, next) {
     return next();
   });  
 }, function(req, res) {
-  return req.send(200);
+  return res.send(200);
 });
 
 app.post('/logout', function(req, res) {
@@ -117,9 +119,9 @@ app.post('/logout', function(req, res) {
 
 app.post('/register', function(req, res) {
   users.add(req.body.email, req.body.fullname, req.body.pass, function(err, user) {
-    if (err) return req.send(500);
+    if (err) return res.send(500);
 
-    return req.json(user);
+    return res.json(user);
   })
 });
 
