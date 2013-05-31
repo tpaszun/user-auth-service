@@ -4,6 +4,7 @@ var express = require('express')
   , passport = require('passport')
   , LocalStrategy = require('passport-local').Strategy
   , RememberMeStrategy = require('passport-remember-me').Strategy
+  , config = require('./config')
   , TokenStore = require('./tokens').TokenStore
   , UsersStore = require('./users').UsersStore
   , users = new UsersStore()
@@ -24,6 +25,10 @@ passport.deserializeUser(function(id, done) {
 });
 
 passport.use(new LocalStrategy(
+  {
+    usernameField: 'email',
+    passwordField: 'pass'
+  },
   function(email, password, done) {
     process.nextTick(function () {
       
@@ -63,7 +68,7 @@ app.use(express.cookieParser());
 app.use(express.bodyParser());
 app.use(express.methodOverride());
 app.use(express.session({ 
-  secret: 'secret',
+  secret: config.session.secret,
   store: new RedisStore()
 }));
 app.use(passport.initialize());
