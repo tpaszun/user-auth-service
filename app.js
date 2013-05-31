@@ -4,6 +4,8 @@ var express = require('express')
   , passport = require('passport')
   , LocalStrategy = require('passport-local').Strategy
   , RememberMeStrategy = require('passport-remember-me').Strategy
+  , cluster = require('cluster')
+  , os = require('os')
   , config = require('./config')
   , utils = require('./utils')
   , TokenStore = require('./tokens').TokenStore
@@ -133,6 +135,26 @@ app.post('/resetpass/:id', function(req, res) {
 
 });
 
-http.createServer(app).listen(app.get('port'), function(){
-  console.log('Express server listening on port ' + app.get('port'));
-});
+if (app.settings.env === 'production') {
+  if (cluster.isMaster) {
+    console.log('CPUs: ' + os.cpus().length);
+
+    for(var i = 0; i < os.cpus().length; i++) {
+      cluster.fork();
+    }
+
+    cluster.on('exit', function(worker) {
+      console.log('Worker ' + worker.id + ' died :(');
+      cluster.fork();
+    });
+
+  } else {
+    http.createServer(app).listen(app.get('port'), function(){
+      console.log('Express server (worker: ' + cluster.worker.id + ') listening on port ' + app.get('port'));
+    });
+  }
+} else {
+  http.createServer(app).listen(app.get('port'), function(){
+    console.log('Express server listening on port ' + app.get('port'));
+  });
+}
